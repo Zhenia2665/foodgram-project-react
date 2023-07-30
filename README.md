@@ -72,7 +72,7 @@ sudo docker-compose exec web python manage.py load_data_csv --path <путь_к_
 
 Клонировать репозиторий и перейти в него в командной строке:
 
-``` git@github.com:mariyabykova/foodgram-project-react.git ``` 
+``` git@github.com:Zhenia2665/foodgram-project-react.git ``` 
 ``` cd foodgram-project-react ``` 
 
 Запустить docker-compose:
@@ -114,7 +114,7 @@ http://localhost/
 
 Клонировать репозиторий и перейти в него в командной строке:
 
-``` git@github.com:mariyabykova/foodgram-project-react.git ``` 
+``` git@github.com:Zhenia2665/foodgram-project-react.git``` 
 ``` cd foodgram-project-react ``` 
 
 Создать и активировать виртуальное окружение:
