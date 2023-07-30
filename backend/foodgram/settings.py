@@ -6,13 +6,9 @@ load_dotenv()
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = (
-    'SECRET_KEY',
-    'my_mega_secret_code_ilz@4zqj=rq&agdol^##zgl9(vs')
-
-DEBUG = os.getenv('DEBUG', default='True') == 'True'
-
-ALLOWED_HOSTS = []
+SECRET_KEY = os.environ.get('SECRET_KEY', 'secret_key')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(' ')
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -76,10 +72,10 @@ DATABASES = {
             'POSTGRES_PASSWORD',
             default=' '),
         'HOST': os.getenv(
-            'DB_HOST',
+            'POSTGRES_HOST',
             default='localhost'),
         'PORT': os.getenv(
-            'DB_PORT',
+            'POSTGRES_PORT',
             default='5432'),
     }}
 
