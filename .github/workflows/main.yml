@@ -60,7 +60,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-#          passphrase: ${{ secrets.PASSPHRASE }}
+          passphrase: ${{ secrets.PASSPHRASE }}
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend
       - name: docker-compose up
@@ -69,15 +69,15 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-#          passphrase: ${{ secrets.PASSPHRASE }}
+          passphrase: ${{ secrets.PASSPHRASE }}
           script: |
-            docker compose down
-            docker system prune -f
-            docker image rm ${{ secrets.DOCKER_USERNAME }}/foodgram_backend
-            docker compose -f docker-compose.production.yml --env-file=.env up -d
-            docker compose exec -f docker-compose.production.yml backend  python manage.py makemigrations
-            docker compose exec -f docker-compose.production.yml backend python manage.py migrate
-            docker compose exec -f docker-compose.production.yml backend python manage.py collectstatic --noinput --clear
+            sudo docker compose down
+            sudo docker system prune -f
+            sudo docker image rm ${{ secrets.DOCKER_USERNAME }}/foodgram_backend
+            sudo docker compose -f docker-compose.production.yml --env-file=.env up -d
+            sudo docker compose exec -f docker-compose.production.yml backend  python manage.py makemigrations
+            sudo docker compose exec -f docker-compose.production.yml backend python manage.py migrate
+            sudo docker compose exec -f docker-compose.production.yml backend python manage.py collectstatic --noinput --clear
 
 
   send_message:
