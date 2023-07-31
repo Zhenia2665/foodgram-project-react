@@ -1,6 +1,6 @@
 name: Foodgram project workflow
 
-on: push
+on: [push]
 
 jobs:
   tests:
@@ -17,7 +17,9 @@ jobs:
         python -m pip install --upgrade pip 
         pip install flake8 pep8-naming flake8-broken-line flake8-return
         pip install -r backend/requirements.txt
-     
+    - name: Test with flake8
+      run: |
+        python -m flake8 --ignore=N805,W503,E126,E501
 
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
@@ -48,7 +50,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
 
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ github.ref }} == 'master'
     runs-on: ubuntu-latest
     needs: build_and_push_to_docker_hub
     steps:
@@ -58,7 +60,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
+#          passphrase: ${{ secrets.PASSPHRASE }}
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend
       - name: docker-compose up
@@ -67,7 +69,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
+#          passphrase: ${{ secrets.PASSPHRASE }}
           script: |
             docker compose down
             docker system prune -f
