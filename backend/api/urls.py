@@ -29,6 +29,4 @@ urlpatterns = [path('auth/token/login/',
                path('recipes/<int:recipe_id>/shopping_cart/',
                AddDeleteShoppingCart.as_view(),
                name='shopping_cart'),
-               path('', include(router.urls)),
-
-]
+               path('', include(router.urls)), ]
