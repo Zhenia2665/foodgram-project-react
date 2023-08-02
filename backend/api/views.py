@@ -28,6 +28,8 @@ from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           SubscribeSerializer, TagSerializer, TokenSerializer,
                           UserCreateSerializer, UserListSerializer,
                           UserPasswordSerializer)
+from .constants import (Y_POSITION_PARAM, FONT_SIZE_CART, FONT_SIZE_DEF,
+                        Y_POSITION_INGR, X_POSITION_INGR)
 
 User = get_user_model()
 FILENAME = 'shoppingcart.pdf'
@@ -225,14 +227,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
         buffer = io.BytesIO()
         page = canvas.Canvas(buffer)
         pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
-        x_position, y_position = 50, 800
+        x_position, y_position = X_POSITION_INGR, Y_POSITION_INGR
         shopping_cart = (
             request.user.shopping_cart.recipe.
             values(
                 'ingredients__name',
                 'ingredients__measurement_unit'
             ).annotate(amount=Sum('recipe__amount')).order_by())
-        page.setFont('Vera', 14)
+        page.setFont('Vera', FONT_SIZE_DEF)
         if shopping_cart:
             indent = 20
             page.drawString(x_position, y_position, 'Cписок покупок:')
@@ -243,14 +245,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
                     f'{recipe["amount"]} '
                     f'{recipe["ingredients__measurement_unit"]}.')
                 y_position -= 15
-                if y_position <= 50:
+                if y_position <= Y_POSITION_PARAM:
                     page.showPage()
-                    y_position = 800
+                    y_position = Y_POSITION_INGR
             page.save()
             buffer.seek(0)
             return FileResponse(
                 buffer, as_attachment=True, filename=FILENAME)
-        page.setFont('Vera', 24)
+        page.setFont('Vera', FONT_SIZE_CART)
         page.drawString(
             x_position,
             y_position,

@@ -4,8 +4,11 @@ from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
 from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.validators import MinValueValidator, MaxValueValidator
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Subscribe, Tag
+from .constants import COOKING_TIME_MIN, COOKING_TIME_MAX,\
+                AMOUNT_INGREDIENT_MIN, AMOUNT_INGREDIENT_MAX
 
 User = get_user_model()
 ERR_MSG = 'Не удается войти в систему с предоставленными учетными данными.'
@@ -69,7 +72,6 @@ class UserListSerializer(
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = (
@@ -110,7 +112,6 @@ class UserPasswordSerializer(serializers.Serializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Tag
         fields = (
@@ -118,7 +119,6 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Ingredient
         fields = '__all__'
@@ -141,7 +141,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeUserSerializer(
         GetIsSubscribedMixin,
         serializers.ModelSerializer):
-
     is_subscribed = serializers.SerializerMethodField(
         read_only=True)
 
@@ -153,9 +152,10 @@ class RecipeUserSerializer(
 
 
 class IngredientsEditSerializer(serializers.ModelSerializer):
-
     id = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    amount = serializers.IntegerField(
+        MinValueValidator(AMOUNT_INGREDIENT_MIN),
+        MaxValueValidator(AMOUNT_INGREDIENT_MAX))
 
     class Meta:
         model = Ingredient
@@ -171,6 +171,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all())
     ingredients = IngredientsEditSerializer(
         many=True)
+    cooking_time = serializers.IntegerField(
+        MinValueValidator(COOKING_TIME_MIN),
+        MaxValueValidator(COOKING_TIME_MAX))
 
     class Meta:
         model = Recipe
@@ -179,14 +182,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ingredients = data['ingredients']
-        ingredient_list = []
+        ingredient_dict = {}
+
         for items in ingredients:
-            ingredient = get_object_or_404(
-                Ingredient, id=items['id'])
-            if ingredient in ingredient_list:
+            ingredient = get_object_or_404(Ingredient, id=items['id'])
+            if ingredient.id in ingredient_dict:
                 raise serializers.ValidationError(
                     'Ингредиент должен быть уникальным!')
-            ingredient_list.append(ingredient)
+            ingredient_dict[ingredient.id] = ingredient
+
         tags = data['tags']
         if not tags:
             raise serializers.ValidationError(
@@ -197,28 +201,22 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     f'Тэга {tag_name} не существует!')
         return data
 
-    def validate_cooking_time(self, cooking_time):
-        if int(cooking_time) < 1:
-            raise serializers.ValidationError(
-                'Время приготовления >= 1!')
-        return cooking_time
-
     def validate_ingredients(self, ingredients):
         if not ingredients:
             raise serializers.ValidationError(
                 'Мин. 1 ингредиент в рецепте!')
-        for ingredient in ingredients:
-            if int(ingredient.get('amount')) < 1:
-                raise serializers.ValidationError(
-                    'Количество ингредиента >= 1!')
         return ingredients
 
     def create_ingredients(self, ingredients, recipe):
-        for ingredient in ingredients:
-            RecipeIngredient.objects.create(
+        recipe_ingredients_list = [
+            RecipeIngredient(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
-                amount=ingredient.get('amount'), )
+                amount=ingredient.get('amount')
+            )
+            for ingredient in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients_list)
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
@@ -270,7 +268,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class SubscribeRecipeSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')

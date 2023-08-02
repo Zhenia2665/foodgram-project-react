@@ -48,10 +48,7 @@ TELEGRAM_TOKEN= #ID бота в Telegram
 
 ```
 sudo docker-compose exec web python manage.py migrate
-
 ```
-
-
 ```
 sudo docker-compose exec web python manage.py collectstatic --no-input 
 ```
@@ -183,3 +180,6 @@ http://localhost/
 
 ### Автор проекта
 Тарасова Евгения.
+admin@mail.ru
+admin
+ip: 84.201.143.93
