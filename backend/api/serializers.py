@@ -7,8 +7,8 @@ from rest_framework import serializers
 from rest_framework.validators import MinValueValidator, MaxValueValidator
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Subscribe, Tag
-from .constants import COOKING_TIME_MIN, COOKING_TIME_MAX,\
-                AMOUNT_INGREDIENT_MIN, AMOUNT_INGREDIENT_MAX
+from .constants import (COOKING_TIME_MIN, COOKING_TIME_MAX,
+                        AMOUNT_INGREDIENT_MIN, AMOUNT_INGREDIENT_MAX)
 
 User = get_user_model()
 ERR_MSG = 'Не удается войти в систему с предоставленными учетными данными.'
