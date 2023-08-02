@@ -47,7 +47,7 @@ sudo docker-compose exec web python manage.py collectstatic --no-input
 sudo docker-compose exec web python manage.py createsuperuser
 ```
 
-## Как запустить проект локально:
+## Запуск проект локально:
 
 Клонировать репозиторий и перейти в него в командной строке:
 

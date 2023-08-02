@@ -160,6 +160,7 @@ class FavoriteRecipe(models.Model):
             sender, instance, created, **kwargs):
         if created:
             return FavoriteRecipe.objects.create(user=instance)
+        return False
 
 
 class Subscribe(models.Model):
@@ -219,3 +220,4 @@ class ShoppingCart(models.Model):
             sender, instance, created, **kwargs):
         if created:
             return ShoppingCart.objects.create(user=instance)
+        return False
