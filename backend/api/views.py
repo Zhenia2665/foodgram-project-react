@@ -1,38 +1,38 @@
 import io
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import make_password
 from django.db.models.aggregates import Count, Sum
-from django.db.models.expressions import Exists, OuterRef, Value
 from django.http import FileResponse
-from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import make_password
 from djoser.views import UserViewSet
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
+from django.db.models.expressions import Exists, OuterRef, Value
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
-from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
                                         IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
-from rest_framework.response import Response
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsAdminOrReadOnly
 from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
                             Subscribe, Tag)
+from .constants import (Y_POSITION_PARAM, FONT_SIZE_CART, FONT_SIZE_DEF,
+                        Y_POSITION_INGR, X_POSITION_INGR, FILENAME_PDF)
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
                           SubscribeSerializer, TagSerializer, TokenSerializer,
                           UserCreateSerializer, UserListSerializer,
                           UserPasswordSerializer)
-from .constants import (Y_POSITION_PARAM, FONT_SIZE_CART, FONT_SIZE_DEF,
-                        Y_POSITION_INGR, X_POSITION_INGR)
+from .pagination import LimitPageNumberPagination
 
 User = get_user_model()
-FILENAME = 'shoppingcart.pdf'
 
 
 class GetObjectMixin:
@@ -48,7 +48,7 @@ class GetObjectMixin:
         return recipe
 
 
-class PermissionAndPaginationMixin:
+class PermissionPaginationMixin:
     """Миксина для списка тегов и ингридиентов."""
 
     permission_classes = (IsAdminOrReadOnly,)
@@ -81,11 +81,11 @@ class AddAndDeleteSubscribe(
         instance = self.get_object()
         if request.user.id == instance.id:
             return Response(
-                {'errors': 'На самого себя не подписаться!'},
+                {'errors': 'Нельзя подписаться на самого себя!'},
                 status=status.HTTP_400_BAD_REQUEST)
         if request.user.follower.filter(author=instance).exists():
             return Response(
-                {'errors': 'Уже подписан!'},
+                {'errors': 'Вы уже подписаны!'},
                 status=status.HTTP_400_BAD_REQUEST)
         subs = request.user.follower.create(author=instance)
         serializer = self.get_serializer(subs)
@@ -99,7 +99,6 @@ class AddDeleteFavoriteRecipe(
         GetObjectMixin,
         generics.RetrieveDestroyAPIView,
         generics.ListCreateAPIView):
-    """Добавление и удаление рецепта в/из избранных."""
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -155,18 +154,18 @@ class UsersViewSet(UserViewSet):
                 self.request.user.follower.filter(
                     author=OuterRef('id'))
             )).prefetch_related(
-                'follower', 'following'
+            'follower', 'following'
         ) if self.request.user.is_authenticated else User.objects.annotate(
             is_subscribed=Value(False))
+
+    def perform_create(self, serializer):
+        password = make_password(self.request.data['password'])
+        serializer.save(password=password)
 
     def get_serializer_class(self):
         if self.request.method.lower() == 'post':
             return UserCreateSerializer
         return UserListSerializer
-
-    def perform_create(self, serializer):
-        password = make_password(self.request.data['password'])
-        serializer.save(password=password)
 
     @action(
         detail=False,
@@ -174,8 +173,7 @@ class UsersViewSet(UserViewSet):
     def subscriptions(self, request):
         """Получить на кого пользователь подписан."""
 
-        user = request.user
-        queryset = Subscribe.objects.filter(user=user)
+        queryset = Subscribe.objects.filter(user=request.user)
         pages = self.paginate_queryset(queryset)
         serializer = SubscribeSerializer(
             pages, many=True,
@@ -188,6 +186,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
     filterset_class = RecipeFilter
+    pagination_class = LimitPageNumberPagination
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
@@ -251,7 +250,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             page.save()
             buffer.seek(0)
             return FileResponse(
-                buffer, as_attachment=True, filename=FILENAME)
+                buffer, as_attachment=True, filename=FILENAME_PDF)
         page.setFont('Vera', FONT_SIZE_CART)
         page.drawString(
             x_position,
@@ -259,11 +258,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
             'Cписок покупок пуст!')
         page.save()
         buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True, filename=FILENAME)
+        return FileResponse(buffer, as_attachment=True, filename=FILENAME_PDF)
 
 
 class TagsViewSet(
-        PermissionAndPaginationMixin,
+        PermissionPaginationMixin,
         viewsets.ModelViewSet):
     """Список тэгов."""
 
@@ -272,7 +271,7 @@ class TagsViewSet(
 
 
 class IngredientsViewSet(
-        PermissionAndPaginationMixin,
+        PermissionPaginationMixin,
         viewsets.ModelViewSet):
     """Список ингредиентов."""
 
@@ -294,5 +293,5 @@ def set_password(request):
             {'message': 'Пароль изменен!'},
             status=status.HTTP_201_CREATED)
     return Response(
-        {'error': 'Введите верные данные!'},
+        {'error': 'Введите валидные данные!'},
         status=status.HTTP_400_BAD_REQUEST)

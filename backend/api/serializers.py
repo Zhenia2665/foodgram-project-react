@@ -8,24 +8,24 @@ from rest_framework.validators import MinValueValidator, MaxValueValidator
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Subscribe, Tag
 from .constants import (COOKING_TIME_MIN, COOKING_TIME_MAX,
-                        AMOUNT_INGREDIENT_MIN, AMOUNT_INGREDIENT_MAX)
+                        AMOUNT_INGREDIENT_MIN, AMOUNT_INGREDIENT_MAX,
+                        ERROR_MSG)
 
 User = get_user_model()
-ERR_MSG = 'Не удается войти в систему с предоставленными учетными данными.'
 
 
 class TokenSerializer(serializers.Serializer):
     email = serializers.CharField(
         label='Email',
         write_only=True)
+    token = serializers.CharField(
+        label='Токен',
+        read_only=True)
     password = serializers.CharField(
         label='Пароль',
         style={'input_type': 'password'},
         trim_whitespace=False,
         write_only=True)
-    token = serializers.CharField(
-        label='Токен',
-        read_only=True)
 
     def validate(self, attrs):
         email = attrs.get('email')
@@ -37,10 +37,10 @@ class TokenSerializer(serializers.Serializer):
                 password=password)
             if not user:
                 raise serializers.ValidationError(
-                    ERR_MSG,
+                    ERROR_MSG,
                     code='authorization')
         else:
-            msg = 'Необходимо указать "адрес электронной почты" и "пароль".'
+            msg = 'Необходимо указать email и password.'
             raise serializers.ValidationError(
                 msg,
                 code='authorization')
@@ -48,7 +48,7 @@ class TokenSerializer(serializers.Serializer):
         return attrs
 
 
-class GetIsSubscribedMixin:
+class GetIsSubscribeMixin:
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
@@ -60,7 +60,7 @@ class GetIsSubscribedMixin:
 
 
 class UserListSerializer(
-        GetIsSubscribedMixin,
+        GetIsSubscribeMixin,
         serializers.ModelSerializer):
     is_subscribed = serializers.BooleanField(read_only=True)
 
@@ -95,12 +95,8 @@ class UserPasswordSerializer(serializers.Serializer):
                 username=user.email,
                 password=current_password):
             raise serializers.ValidationError(
-                ERR_MSG, code='authorization')
+                ERROR_MSG, code='authorization')
         return current_password
-
-    def validate_new_password(self, new_password):
-        validators.validate_password(new_password)
-        return new_password
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -109,6 +105,10 @@ class UserPasswordSerializer(serializers.Serializer):
         user.password = password
         user.save()
         return validated_data
+
+    def validate_new_password(self, new_password):
+        validators.validate_password(new_password)
+        return new_password
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -127,10 +127,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(
         source='ingredient.id')
-    name = serializers.ReadOnlyField(
-        source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
+    name = serializers.ReadOnlyField(
+        source='ingredient.name')
 
     class Meta:
         model = RecipeIngredient
@@ -139,7 +139,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeUserSerializer(
-        GetIsSubscribedMixin,
+        GetIsSubscribeMixin,
         serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField(
         read_only=True)
@@ -155,7 +155,8 @@ class IngredientsEditSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     amount = serializers.IntegerField(
         MinValueValidator(AMOUNT_INGREDIENT_MIN),
-        MaxValueValidator(AMOUNT_INGREDIENT_MAX))
+        MaxValueValidator(AMOUNT_INGREDIENT_MAX)
+    )
 
     class Meta:
         model = Ingredient
@@ -173,7 +174,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True)
     cooking_time = serializers.IntegerField(
         MinValueValidator(COOKING_TIME_MIN),
-        MaxValueValidator(COOKING_TIME_MAX))
+        MaxValueValidator(COOKING_TIME_MAX)
+    )
 
     class Meta:
         model = Recipe
@@ -194,17 +196,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = data['tags']
         if not tags:
             raise serializers.ValidationError(
-                'Нужен хотя бы один тэг для рецепта!')
+                'Нужен хотя бы один тэг!')
         for tag_name in tags:
             if not Tag.objects.filter(name=tag_name).exists():
                 raise serializers.ValidationError(
-                    f'Тэга {tag_name} не существует!')
+                    f'Тэг {tag_name} не существует!')
         return data
 
     def validate_ingredients(self, ingredients):
         if not ingredients:
             raise serializers.ValidationError(
-                'Мин. 1 ингредиент в рецепте!')
+                'Минимум 1 ингредиент в рецепте!')
         return ingredients
 
     def create_ingredients(self, ingredients, recipe):

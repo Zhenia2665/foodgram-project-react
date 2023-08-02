@@ -2,8 +2,7 @@ from django.contrib import admin
 
 from .models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
                      ShoppingCart, Subscribe, Tag)
-
-EMPTY_MSG = '-пусто-'
+from .constants import EMPTY_MSG_ADMIN
 
 
 class RecipeIngredientAdmin(admin.StackedInline):
@@ -22,10 +21,10 @@ class RecipeAdmin(admin.ModelAdmin):
         'author__email', 'ingredients__name')
     list_filter = ('pub_date', 'tags',)
     inlines = (RecipeIngredientAdmin,)
-    empty_value_display = EMPTY_MSG
+    empty_value_display = EMPTY_MSG_ADMIN
 
     @admin.display(
-        description='Электронная почта автора')
+        description='Электронная почта')
     def get_author(self, obj):
         return obj.author.email
 
@@ -53,16 +52,30 @@ class TagAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'name', 'color', 'slug',)
     search_fields = ('name', 'slug',)
-    empty_value_display = EMPTY_MSG
+    ordering = ('color',)
+    empty_value_display = EMPTY_MSG_ADMIN
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'name', 'measurement_unit',)
-    search_fields = (
-        'name', 'measurement_unit',)
-    empty_value_display = EMPTY_MSG
+    list_display = ('name', 'measurement_unit',)
+    list_filter = ('name',)
+    search_fields = ('name',)
+    ordering = ('measurement_unit',)
+    empty_value_display = EMPTY_MSG_ADMIN
+
+
+@admin.register(ShoppingCart)
+class SoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe',)
+    empty_value_display = EMPTY_MSG_ADMIN
+
+
+@admin.register(FavoriteRecipe)
+class FavoriteRecipeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe',)
+    list_filter = ('user', 'recipe',)
+    empty_value_display = EMPTY_MSG_ADMIN
 
 
 @admin.register(Subscribe)
@@ -71,38 +84,4 @@ class SubscribeAdmin(admin.ModelAdmin):
         'id', 'user', 'author', 'created',)
     search_fields = (
         'user__email', 'author__email',)
-    empty_value_display = EMPTY_MSG
-
-
-@admin.register(FavoriteRecipe)
-class FavoriteRecipeAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'user', 'get_recipe', 'get_count')
-    empty_value_display = EMPTY_MSG
-
-    @admin.display(
-        description='Рецепты')
-    def get_recipe(self, obj):
-        return [
-            f'{item["name"]} ' for item in obj.recipe.values('name')[:5]]
-
-    @admin.display(
-        description='В избранных')
-    def get_count(self, obj):
-        return obj.recipe.count()
-
-
-@admin.register(ShoppingCart)
-class SoppingCartAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'user', 'get_recipe', 'get_count')
-    empty_value_display = EMPTY_MSG
-
-    @admin.display(description='Рецепты')
-    def get_recipe(self, obj):
-        return [
-            f'{item["name"]} ' for item in obj.recipe.values('name')[:5]]
-
-    @admin.display(description='В избранных')
-    def get_count(self, obj):
-        return obj.recipe.count()
+    empty_value_display = EMPTY_MSG_ADMIN

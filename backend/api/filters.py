@@ -5,7 +5,7 @@ from users.models import User
 from recipes.models import Ingredient, Recipe
 
 
-class TagsMultipleChoiceField(
+class TagsChoiceField(
         filters.fields.MultipleChoiceField):
     def validate(self, value):
         if self.required and not value:
@@ -21,7 +21,7 @@ class TagsMultipleChoiceField(
 
 
 class TagsFilter(filters.AllValuesMultipleFilter):
-    field_class = TagsMultipleChoiceField
+    field_class = TagsChoiceField
 
 
 class IngredientFilter(filters.FilterSet):
@@ -33,17 +33,17 @@ class IngredientFilter(filters.FilterSet):
 
 
 class RecipeFilter(filters.FilterSet):
-    author = filters.ModelChoiceFilter(
-        queryset=User.objects.all())
     is_in_shopping_cart = filters.BooleanFilter(
         widget=filters.widgets.BooleanWidget(),
         label='В корзине.')
+    author = filters.ModelChoiceFilter(
+        queryset=User.objects.all())
     is_favorited = filters.BooleanFilter(
         widget=filters.widgets.BooleanWidget(),
         label='В избранных.')
     tags = filters.AllValuesMultipleFilter(
         field_name='tags__slug',
-        label='Ссылка')
+        label='Тэг')
 
     class Meta:
         model = Recipe
