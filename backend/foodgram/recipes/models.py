@@ -221,4 +221,3 @@ class ShoppingCart(models.Model):
         if created:
             return ShoppingCart.objects.create(user=instance)
         return False
-        
