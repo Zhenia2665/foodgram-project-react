@@ -1,13 +1,4 @@
 import django.contrib.auth.password_validation as validators
-from django.contrib.auth import authenticate
-from django.contrib.auth.hashers import make_password
-from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer
-from drf_base64.fields import Base64ImageField
-from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-
-from users.models import Subscription, User
 from app.models import (
     Favorite,
     Ingredient,
@@ -16,7 +7,16 @@ from app.models import (
     ShoppingCart,
     Tag
 )
-from .constants import ERROR_MSG, COOKING_TIME_MIN, COOKING_TIME_MAX
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import make_password
+from django.shortcuts import get_object_or_404
+from djoser.serializers import UserSerializer
+from drf_base64.fields import Base64ImageField
+from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
+from .constants import COOKING_TIME_MAX, COOKING_TIME_MIN, ERROR_MSG
+from users.models import Subscription, User
 
 
 class TokenSerializer(serializers.Serializer):

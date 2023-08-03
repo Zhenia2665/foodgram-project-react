@@ -38,8 +38,8 @@ from .serializers import (
     CustomUserSerializer,
     IngredientSerializer,
     RecipeGetSerializer,
-    RecipeWriteSerializer,
     RecipeSerializer,
+    RecipeWriteSerializer,
     SubscribeCreateSerializer,
     SubscribeSerializer,
     TagSerializer,
@@ -200,7 +200,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeGetSerializer
-        return RecipeSerializer
+        return RecipeWriteSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
