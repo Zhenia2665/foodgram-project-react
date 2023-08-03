@@ -3,7 +3,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
-from djoser.serializers import UserSerializer, UserGetSerializer
+from djoser.serializers import UserSerializer
 from drf_base64.fields import Base64ImageField, create_ingredients
 from rest_framework import serializers
 from rest_framework.validators import (
