@@ -1,18 +1,16 @@
-import io
 import django.contrib.auth.password_validation as validators
-from django.http import FileResponse
-from django.db.models import Sum
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from djoser.serializers import UserSerializer, UserGetSerializer
-from drf_base64.fields import Base64ImageField
+from drf_base64.fields import Base64ImageField, create_ingredients
 from rest_framework import serializers
-from rest_framework.validators import MinValueValidator, MaxValueValidator
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from app.models import (Favorite, RecipeIngredient, IngredientAmount, Recipe,
-                        ShoppingCart, Tag)
+from rest_framework.validators import (
+                            UniqueTogetherValidator,
+                            MinValueValidator, MaxValueValidator)
+from app.models import (Favorite, RecipeIngredient, Ingredient,
+                        IngredientAmount, Recipe, ShoppingCart, Tag)
 from .constants import (COOKING_TIME_MIN, COOKING_TIME_MAX,
                         AMOUNT_INGREDIENT_MIN, AMOUNT_INGREDIENT_MAX,
                         ERROR_MSG)
@@ -121,25 +119,23 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        return UserSubscribeRepresentSerializer(
+        return UserSubscribeSerializer(
             instance.author, context={'request': request}
         ).data
 
 
 class CustomUserSerializer(UserSerializer):
-        is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
-        return user.is_authenticated and Subscription.objects.filter(author=obj.id,
-                                                               user=user
-                                                               ).exists()
+        return user.is_authenticated and Subscription.objects.filter(
+            author=obj.id, user=user).exists()
 
     class Meta:
         fields = ('email', 'id', 'username',
                   'first_name', 'last_name', 'is_subscribed')
         model = User
-
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -180,6 +176,8 @@ class IngredientsEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'amount')
+
+
 class IngredientPostSerializer(serializers.ModelSerializer):
     """Сериализатор для добавления ингредиентов.
     Используется при работе с рецептами."""
@@ -287,6 +285,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             context={'request': request}
         ).data
 
+
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Сериализатор для создания рецептов."""
     image = Base64ImageField(
@@ -365,7 +364,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             instance, validated_data)
 
     def to_representation(self, instance):
-        return RecipeReadSerializer(
+        return RecipePostSerializer(
             instance,
             context={
                 'request': self.context.get('request')
@@ -376,7 +375,7 @@ class RecipePostSerializer(serializers.ModelSerializer):
     """Сериализатор для публикации рецептов."""
     author = serializers.SlugRelatedField(read_only=True,
                                           slug_field='username')
-    ingredients = validated_data.pop('ingredients')(
+    ingredients = RecipeSerializer('ingredients')(
         source='ingredient_amount',
         many=True,)
     image = Base64ImageField()
@@ -454,7 +453,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        return RecipeSmallSerializer(
+        return RecipeSerializer(
             instance.recipe,
             context={'request': request}
         ).data
@@ -475,7 +474,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        return RecipeSmallSerializer(
+        return RecipeSerializer(
             instance.recipe,
             context={'request': request}
         ).data

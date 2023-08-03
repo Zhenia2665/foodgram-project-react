@@ -23,6 +23,14 @@ class TagsFilter(filters.AllValuesMultipleFilter):
     field_class = TagsChoiceField
 
 
+class IngredientFilter(filters.FilterSet):
+    name = filters.CharFilter(lookup_expr='istartswith')
+
+    class Meta:
+        model = Ingredient
+        fields = ('name',)
+
+
 class RecipeFilter(FilterSet):
     tags = filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
@@ -50,9 +58,3 @@ class RecipeFilter(FilterSet):
             return queryset.filter(carts__user=self.request.user)
         return queryset
 
-    class IngredientFilter(filters.FilterSet):
-        name = filters.CharFilter(lookup_expr='istartswith')
-
-    class Meta:
-        model = Ingredient
-        fields = ('name',)
