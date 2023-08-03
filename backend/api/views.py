@@ -26,9 +26,10 @@ from .constants import (FILENAME_PDF, FONT_SIZE_CART, FONT_SIZE_DEF, INDENT,
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination, LimitPageNumberPagination
 from .serializers import (CustomUserSerializer, IngredientSerializer,
-                          RecipeReadSerializer,
-                          SubscribeCreateSerializer, SubscribeRecipeSerializer,
-                          SubscribeSerializer, TagSerializer, TokenSerializer)
+                          RecipeGetSerializer, UserSubscribeSerializer,
+                          SubscribeCreateSerializer, SubscribeSerializer,
+                          RecipeSerializer,
+                          TagSerializer, TokenSerializer)
 
 User = get_user_model()
 
@@ -48,7 +49,7 @@ class CustomUserViewset(UserViewSet):
     def subscriptions(self, request):
         queryset = request.user.subscriptions.all()
         page = self.paginate_queryset(queryset)
-        serializer = SubscribeSerializer(
+        serializer = UserSubscribeSerializer(
             page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
@@ -102,7 +103,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class GetObjectMixin:
     """Удаление/добавление рецептов из избранного или корзины."""
 
-    serializer_class = SubscribeRecipeSerializer
+    serializer_class = RecipeSerializer
     permission_classes = (AllowAny,)
 
     def get_object(self):
@@ -181,8 +182,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
-            return RecipeReadSerializer
-        return RecipeWriteSerializer
+            return RecipeSerializer
+        return RecipeGetSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
