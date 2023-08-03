@@ -154,7 +154,7 @@ class AmountSerializerGet(serializers.ModelSerializer):
         min_value=MAX_AMOUNT_INGREDIENTS,
         message='Максимальное количествоингредиентов - 32000',
     ),
- 
+
     class Meta:
         model = IngredientAmount
         fields = ('id', 'name', 'measurement_unit', 'amount')
