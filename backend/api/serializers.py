@@ -1,12 +1,4 @@
 import django.contrib.auth.password_validation as validators
-from app.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingCart,
-    Tag
-)
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
@@ -15,8 +7,17 @@ from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .constants import COOKING_TIME_MAX, COOKING_TIME_MIN, ERROR_MSG
 from users.models import Subscription, User
+from app.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    IngredientAmount,
+    ShoppingCart,
+    Tag
+)
+from .constants import COOKING_TIME_MAX, COOKING_TIME_MIN, ERROR_MSG
 
 
 class TokenSerializer(serializers.Serializer):
@@ -139,6 +140,28 @@ class TagSerializer(serializers.ModelSerializer):
             "color",
             "slug",
         )
+
+
+class AmountSerializerGet(serializers.ModelSerializer):
+    id = serializers.CharField(source='ingredients.id')
+    name = serializers.CharField(source='ingredients.name')
+    measurement_unit = serializers.CharField(
+        source='ingredients.measurement_unit')
+
+    class Meta:
+        model = IngredientAmount
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
+class AmountSerializerPost(serializers.ModelSerializer):
+    id = serializers.CharField(source='ingredients.id')
+    name = serializers.ReadOnlyField(source='ingredients.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredients.measurement_unit')
+
+    class Meta:
+        model = IngredientAmount
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
