@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .constants import (INGREDIENT_NAME_MAX_LENGHT,
+from .constants import (INGREDIENT_NAME_MAX_LENGHT, MIN, MAX,
                         INGREDIENT_MEASURE_MAX_LENGHT,
                         TAG_NAME_MAX_LENGHT, TAG_COLOR_MAX_LENGHT,
                         TAG_SLUG_MAX_LENGHT, RECIEPE_NAME_MAX_LENGHT)
@@ -68,8 +68,6 @@ class Recipe(models.Model):
         null=True)
     text = models.TextField(
         'Описание')
-    cooking_time = models.BigIntegerField(
-        'Время приготовления')
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient')
@@ -80,7 +78,10 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления в минутах',
         validators=[validators.MinValueValidator(
-            1, message='Мин. время приготовления 1 минута'), ])
+            MIN, message='Мин. время приготовления 1 минута'),
+            validators.MaxValueValidator(
+                MAX, message='Макс. время приготовления 32000 минут'),
+        ])
     pub_date = models.DateTimeField(
         'Дата публикации',
         auto_now_add=True)
@@ -106,10 +107,12 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='ingredient')
     amount = models.PositiveSmallIntegerField(
-        default=1,
         validators=(
             validators.MinValueValidator(
-                1, message='Мин. количество ингредиентов 1'),),
+                MIN, message='Мин. количество ингредиентов 1'),
+            validators.MaxValueValidator(
+                MAX, message='Макс. количество ингредиентов 32000'),
+        ),
         verbose_name='Количество', )
 
     class Meta:
@@ -129,13 +132,13 @@ class RecipeIngredient(models.Model):
 
 
 class FavoriteRecipe(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         null=True,
         related_name='favorite_recipe',
         verbose_name='Пользователь')
-    recipe = models.ManyToManyField(
+    recipe = models.ForeignKey(
         Recipe,
         related_name='favorite_recipe',
         verbose_name='Избранный рецепт')
@@ -192,13 +195,13 @@ class Subscribe(models.Model):
 
 
 class ShoppingCart(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         null=True,
         verbose_name='Пользователь')
-    recipe = models.ManyToManyField(
+    recipe = models.ForeignKey(
         Recipe,
         related_name='shopping_cart',
         verbose_name='Покупка')

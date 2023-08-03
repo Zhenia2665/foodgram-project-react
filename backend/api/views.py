@@ -5,7 +5,7 @@ from django.db.models.aggregates import Count, Sum
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from django.db.models.expressions import Exists, OuterRef, Value
+from django.db.models.expressions import Value
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
@@ -20,10 +20,10 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 
 from .filters import IngredientFilter, RecipeFilter
-from recipes.models import (FavoriteRecipe, Ingredient, Recipe, ShoppingCart,
-                            Subscribe, Tag)
+from recipes.models import Ingredient, Recipe, Subscribe, Tag
 from .constants import (Y_POSITION_PARAM, FONT_SIZE_CART, FONT_SIZE_DEF,
-                        Y_POSITION_INGR, X_POSITION_INGR, FILENAME_PDF)
+                        Y_POSITION_INGR, X_POSITION_INGR, FILENAME_PDF,
+                        Y_POSITION_CART, INDENT)
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
                           SubscribeSerializer, TagSerializer, TokenSerializer,
@@ -43,7 +43,7 @@ class CustomUserViewset(UserViewSet):
     @action(detail=False, url_path='subscriptions',
             permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
-        queryset = Subscribe.objects.filter(user=request.user)
+        queryset = request.user.subscriptions.all()
         page = self.paginate_queryset(queryset)
         serializer = SubscribeSerializer(
             page, many=True, context={'request': request})
@@ -131,14 +131,6 @@ class AddAndDeleteSubscribe(
 
     def create(self, request, *args, **kwargs):
         instance = self.get_object()
-        if request.user.id == instance.id:
-            return Response(
-                {'errors': 'Нельзя подписаться на самого себя!'},
-                status=status.HTTP_400_BAD_REQUEST)
-        if request.user.follower.filter(author=instance).exists():
-            return Response(
-                {'errors': 'Вы уже подписаны!'},
-                status=status.HTTP_400_BAD_REQUEST)
         subs = request.user.follower.create(author=instance)
         serializer = self.get_serializer(subs)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -186,25 +178,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def get_queryset(self):
-        return Recipe.objects.annotate(
-            is_favorited=Exists(
-                FavoriteRecipe.objects.filter(
-                    user=self.request.user, recipe=OuterRef('id'))),
-            is_in_shopping_cart=Exists(
-                ShoppingCart.objects.filter(
-                    user=self.request.user,
-                    recipe=OuterRef('id')))
-        ).select_related('author').prefetch_related(
-            'tags', 'ingredients', 'recipe',
-            'shopping_cart', 'favorite_recipe'
-        ) if self.request.user.is_authenticated else Recipe.objects.annotate(
-            is_in_shopping_cart=Value(False),
-            is_favorited=Value(False),
-        ).select_related('author').prefetch_related(
-            'tags', 'ingredients', 'recipe',
-            'shopping_cart', 'favorite_recipe')
-
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -227,7 +200,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             ).annotate(amount=Sum('recipe__amount')).order_by())
         page.setFont('Vera', FONT_SIZE_DEF)
         if shopping_cart:
-            indent = 20
+            indent = INDENT
             page.drawString(x_position, y_position, 'Cписок покупок:')
             for index, recipe in enumerate(shopping_cart, start=1):
                 page.drawString(
@@ -235,7 +208,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                     f'{index}. {recipe["ingredients__name"]} - '
                     f'{recipe["amount"]} '
                     f'{recipe["ingredients__measurement_unit"]}.')
-                y_position -= 15
+                y_position -= Y_POSITION_CART
                 if y_position <= Y_POSITION_PARAM:
                     page.showPage()
                     y_position = Y_POSITION_INGR
