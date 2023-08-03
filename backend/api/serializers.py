@@ -1,6 +1,4 @@
 import django.contrib.auth.password_validation as validators
-from app.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                        ShoppingCart, Tag)
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from djoser.serializers import UserSerializer
@@ -8,7 +6,10 @@ from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import (MaxValueValidator, MinValueValidator,
                                        UniqueTogetherValidator)
+
 from users.models import Subscription, User
+from app.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                        ShoppingCart, Tag)
 
 from .constants import AMOUNT_INGREDIENT_MAX, AMOUNT_INGREDIENT_MIN, ERROR_MSG
 

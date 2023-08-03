@@ -26,7 +26,7 @@ from .constants import (FILENAME_PDF, FONT_SIZE_CART, FONT_SIZE_DEF, INDENT,
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination, LimitPageNumberPagination
 from .serializers import (CustomUserSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer,
+                          RecipeReadSerializer,
                           SubscribeCreateSerializer, SubscribeRecipeSerializer,
                           SubscribeSerializer, TagSerializer, TokenSerializer)
 
