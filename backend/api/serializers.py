@@ -156,11 +156,6 @@ class IngredientsEditSerializer(serializers.ModelSerializer):
         source='ingredient.measurement_unit',
         read_only=True
     )
-
-    class Meta:
-        model = RecipeIngredient
-        fields = ('id', 'name', 'measurement_unit', 'amount')
-
     id = serializers.IntegerField()
     amount = serializers.IntegerField(
         MinValueValidator(AMOUNT_INGREDIENT_MIN),
@@ -168,8 +163,8 @@ class IngredientsEditSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Ingredient
-        fields = ('id', 'amount')
+        model = RecipeIngredient
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class RecipeSerializer(serializers.ModelSerializer):

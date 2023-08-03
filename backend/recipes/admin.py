@@ -10,6 +10,7 @@ class RecipeIngredientAdmin(admin.StackedInline):
     autocomplete_fields = ('ingredient',)
     min_num = 1
 
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
