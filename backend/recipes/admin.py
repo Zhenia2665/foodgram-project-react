@@ -24,7 +24,8 @@ class RecipeAdmin(admin.ModelAdmin):
         "pub_date",
         "get_favorite_count",
     )
-    search_fields = ("name", "cooking_time", "author__email", "ingredients__name")
+    search_fields = (
+        "name", "cooking_time", "author__email", "ingredients__name")
     list_filter = (
         "pub_date",
         "tags",
@@ -48,7 +49,8 @@ class RecipeAdmin(admin.ModelAdmin):
                 f'{item["ingredient__name"]} - {item["amount"]}'
                 f' {item["ingredient__measurement_unit"]}.'
                 for item in obj.recipe.values(
-                    "ingredient__name", "amount", "ingredient__measurement_unit"
+                    "ingredient__name", "amount",
+                    "ingredient__measurement_unit"
                 )
             ]
         )

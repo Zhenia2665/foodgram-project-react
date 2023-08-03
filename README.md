@@ -9,7 +9,8 @@
 - Docker 
 - Gunicorn 
 - Nginx 
-- PostresSQL 
+- PostresSQL
+- Yandex.Cloud
  
 ## Запуск проекта на сервере: 
  

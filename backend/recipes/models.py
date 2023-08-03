@@ -28,9 +28,12 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField("Имя", max_length=TAG_NAME_MAX_LENGHT, unique=True)
-    color = models.CharField("Цвет", max_length=TAG_COLOR_MAX_LENGHT, unique=True)
-    slug = models.SlugField("Слаг", max_length=TAG_SLUG_MAX_LENGHT, unique=True)
+    name = models.CharField(
+        "Имя", max_length=TAG_NAME_MAX_LENGHT, unique=True)
+    color = models.CharField(
+        "Цвет", max_length=TAG_COLOR_MAX_LENGHT, unique=True)
+    slug = models.SlugField(
+        "Слаг", max_length=TAG_SLUG_MAX_LENGHT, unique=True)
 
     class Meta:
         verbose_name = "Тэг"
@@ -43,15 +46,18 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="recipe", verbose_name="Автор"
+        User, on_delete=models.CASCADE,
+        related_name="recipe", verbose_name="Автор"
     )
     name = models.CharField("Название", max_length=RECIEPE_NAME_MAX_LENGHT)
     image = models.ImageField(
         "Изображение", upload_to="static/recipe/", blank=True, null=True
     )
     text = models.TextField("Описание")
-    ingredients = models.ManyToManyField(Ingredient, through="RecipeIngredient")
-    tags = models.ManyToManyField(Tag, verbose_name="Тэги", related_name="recipes")
+    ingredients = models.ManyToManyField(
+        Ingredient, through="RecipeIngredient")
+    tags = models.ManyToManyField(
+        Tag, verbose_name="Тэги", related_name="recipes")
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name="Время приготовления в минутах",
         validators=[
@@ -76,7 +82,9 @@ class Recipe(models.Model):
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
-        Recipe, verbose_name="Рецепт", on_delete=models.CASCADE, related_name="recipe"
+        Recipe, verbose_name="Рецепт",
+        on_delete=models.CASCADE,
+        related_name="recipe"
     )
     ingredient = models.ForeignKey(
         "Ingredient",
@@ -86,7 +94,8 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         validators=(
-            validators.MinValueValidator(MIN, message="Мин. количество ингредиентов 1"),
+            validators.MinValueValidator(
+                MIN, message="Мин. количество ингредиентов 1"),
             validators.MaxValueValidator(
                 MAX, message="Макс. количество ингредиентов 32000"
             ),
@@ -100,7 +109,8 @@ class RecipeIngredient(models.Model):
         ordering = ["-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["recipe", "ingredient"], name="unique_ingredient_recipe"
+                fields=["recipe", "ingredient"],
+                name="unique_ingredient_recipe"
             )
         ]
 
@@ -156,7 +166,9 @@ class Subscribe(models.Model):
         verbose_name="Подписчик",
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="following", verbose_name="Автор"
+        User, on_delete=models.CASCADE,
+        related_name="following",
+        verbose_name="Автор"
     )
     created = models.DateTimeField("Дата подписки", auto_now_add=True)
 
@@ -191,7 +203,8 @@ class ShoppingCart(models.Model):
         verbose_name_plural = "покупки"
         default_related_name = "shopping_list"
         constraints = [
-            models.UniqueConstraint(fields=["user", "recipe"], name="unique_shopping")
+            models.UniqueConstraint(
+                fields=["user", "recipe"], name="unique_shopping")
         ]
 
     def __str__(self):

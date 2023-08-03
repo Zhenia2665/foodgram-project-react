@@ -113,8 +113,8 @@ class GetObjectMixin:
 
 
 class AddAndDeleteSubscribe(
-    generics.RetrieveDestroyAPIView, generics.ListCreateAPIView
-):
+    generics.RetrieveDestroyAPIView,
+    generics.ListCreateAPIView):
     """Подписка и отписка от пользователя."""
 
     serializer_class = SubscribeSerializer
@@ -139,7 +139,8 @@ class AddAndDeleteSubscribe(
         instance = self.get_object()
         subs = request.user.follower.create(author=instance)
         serializer = self.get_serializer(subs)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
         self.request.user.follower.filter(author=instance).delete()
@@ -157,8 +158,9 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class AddDeleteShoppingCart(
-    GetObjectMixin, generics.RetrieveDestroyAPIView, generics.ListCreateAPIView
-):
+    GetObjectMixin,
+    generics.RetrieveDestroyAPIView,
+    generics.ListCreateAPIView):
     """Добавление и удаление рецепта в/из корзины."""
 
     def create(self, request, *args, **kwargs):
