@@ -112,9 +112,8 @@ class GetObjectMixin:
         return recipe
 
 
-class AddAndDeleteSubscribe(
-    generics.RetrieveDestroyAPIView,
-    generics.ListCreateAPIView):
+class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
+                            generics.ListCreateAPIView):
     """Подписка и отписка от пользователя."""
 
     serializer_class = SubscribeSerializer
@@ -157,10 +156,9 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class AddDeleteShoppingCart(
-    GetObjectMixin,
-    generics.RetrieveDestroyAPIView,
-    generics.ListCreateAPIView):
+class AddDeleteShoppingCart(GetObjectMixin,
+                            generics.RetrieveDestroyAPIView,
+                            generics.ListCreateAPIView):
     """Добавление и удаление рецепта в/из корзины."""
 
     def create(self, request, *args, **kwargs):
