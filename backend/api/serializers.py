@@ -6,8 +6,8 @@ from django.contrib.auth.hashers import make_password
 from djoser.serializers import UserSerializer
 from drf_base64.fields import Base64ImageField, create_ingredients
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator,\
-    MinValueValidator, MaxValueValidator
+from rest_framework.validators import (
+    UniqueTogetherValidator, MinValueValidator, MaxValueValidator)
 from app.models import (Favorite, RecipeIngredient, Ingredient,
                         IngredientAmount, Recipe, ShoppingCart, Tag)
 from .constants import (COOKING_TIME_MIN, COOKING_TIME_MAX,
