@@ -7,7 +7,6 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import Ingredient, Recipe, Subscribe, Tag
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
@@ -15,21 +14,39 @@ from rest_framework import generics, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
-from rest_framework.permissions import (SAFE_METHODS, AllowAny,
-                                        IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (
+    SAFE_METHODS,
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
 from rest_framework.response import Response
 
-from .constants import (FILENAME_PDF, FONT_SIZE_CART, FONT_SIZE_DEF, INDENT,
-                        X_POSITION_INGR, Y_POSITION_CART, Y_POSITION_INGR,
-                        Y_POSITION_PARAM)
+from .constants import (
+    FILENAME_PDF,
+    FONT_SIZE_CART,
+    FONT_SIZE_DEF,
+    INDENT,
+    X_POSITION_INGR,
+    Y_POSITION_CART,
+    Y_POSITION_INGR,
+    Y_POSITION_PARAM
+)
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination, LimitPageNumberPagination
-from .serializers import (CustomUserSerializer, IngredientSerializer,
-                          RecipeGetSerializer, UserSubscribeSerializer,
-                          SubscribeCreateSerializer, SubscribeSerializer,
-                          RecipeSerializer,
-                          TagSerializer, TokenSerializer)
+from .serializers import (
+    CustomUserSerializer,
+    IngredientSerializer,
+    RecipeGetSerializer,
+    RecipeWriteSerializer,
+    RecipeSerializer,
+    SubscribeCreateSerializer,
+    SubscribeSerializer,
+    TagSerializer,
+    TokenSerializer,
+    UserSubscribeSerializer
+)
+from recipes.models import Ingredient, Recipe, Subscribe, Tag
 
 User = get_user_model()
 
@@ -182,8 +199,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
-            return RecipeSerializer
-        return RecipeGetSerializer
+            return RecipeGetSerializer
+        return RecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

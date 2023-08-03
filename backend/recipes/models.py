@@ -4,10 +4,16 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .constants import (INGREDIENT_MEASURE_MAX_LENGHT,
-                        INGREDIENT_NAME_MAX_LENGHT, MAX, MIN,
-                        RECIEPE_NAME_MAX_LENGHT, TAG_COLOR_MAX_LENGHT,
-                        TAG_NAME_MAX_LENGHT, TAG_SLUG_MAX_LENGHT)
+from .constants import (
+    INGREDIENT_MEASURE_MAX_LENGHT,
+    INGREDIENT_NAME_MAX_LENGHT,
+    MAX,
+    MIN,
+    RECIEPE_NAME_MAX_LENGHT,
+    TAG_COLOR_MAX_LENGHT,
+    TAG_NAME_MAX_LENGHT,
+    TAG_SLUG_MAX_LENGHT
+)
 
 User = get_user_model()
 

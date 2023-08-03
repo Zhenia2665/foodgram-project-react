@@ -1,8 +1,15 @@
 from django.contrib import admin
 
 from .constants import EMPTY_MSG_ADMIN
-from .models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Subscribe, Tag)
+from .models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Subscribe,
+    Tag
+)
 
 
 class RecipeIngredientAdmin(admin.StackedInline):
