@@ -17,7 +17,8 @@ from app.models import (
     ShoppingCart,
     Tag
 )
-from .constants import COOKING_TIME_MAX, COOKING_TIME_MIN, ERROR_MSG
+from .constants import (COOKING_TIME_MAX, COOKING_TIME_MIN, ERROR_MSG,
+                        MIN_AMOUNT_INGREDIENTS, MAX_AMOUNT_INGREDIENTS)
 
 
 class TokenSerializer(serializers.Serializer):
@@ -147,18 +148,13 @@ class AmountSerializerGet(serializers.ModelSerializer):
     name = serializers.CharField(source='ingredients.name')
     measurement_unit = serializers.CharField(
         source='ingredients.measurement_unit')
-
-    class Meta:
-        model = IngredientAmount
-        fields = ('id', 'name', 'measurement_unit', 'amount')
-
-
-class AmountSerializerPost(serializers.ModelSerializer):
-    id = serializers.CharField(source='ingredients.id')
-    name = serializers.ReadOnlyField(source='ingredients.name')
-    measurement_unit = serializers.ReadOnlyField(
-        source='ingredients.measurement_unit')
-
+    amount = serializers.IntegerField(
+        min_value=MIN_AMOUNT_INGREDIENTS,
+        message='Нужно количество ингредиентов -1',
+        min_value=MAX_AMOUNT_INGREDIENTS,
+        message='Максимальное количествоингредиентов - 32000',
+    ),
+ 
     class Meta:
         model = IngredientAmount
         fields = ('id', 'name', 'measurement_unit', 'amount')
