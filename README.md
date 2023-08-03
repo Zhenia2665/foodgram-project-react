@@ -19,10 +19,7 @@
 scp docker-compose.yml <логин_на_сервере>@<IP_сервера>:/home/<логин_на_сервере>/docker-compose.yml 
 scp nginx.conf <логин_на_сервере>@<IP_сервера>:/home/<логин_на_сервере>/nginx.conf 
  
- 
- 
 Добавить в секреты на гитхабе следующие данные: 
- 
  
 DB_ENGINE=django.db.backends.postgresql 
 DB_NAME=postgres 
@@ -31,19 +28,17 @@ POSTGRES_PASSWORD=postgres
 DB_HOST=db 
 DB_PORT=5432 
 SECRET_KEY='Здесь указать секретный ключ' 
-ALLOWED_HOSTS='Здесь указать имя или IP хоста' (Для локального запуска - 127.0.0.1) 
- 
- 
- 
-В директории infra в терминале ввести команду: 
+ALLOWED_HOSTS='Здесь указать имя или IP хоста'
+
+В директории infra в терминале ввести команды: 
+
 docker-compose up 
 sudo docker-compose exec web python manage.py migrate 
 sudo docker-compose exec web python manage.py collectstatic --no-input  
  
  
 После этого нужно создать суперпользователя и загрузить в админке информацию об ингредиентах: 
- 
- 
+
 sudo docker-compose exec web python manage.py createsuperuser 
  
  
@@ -51,7 +46,7 @@ sudo docker-compose exec web python manage.py createsuperuser
  
 Клонировать репозиторий и перейти в него в командной строке: 
  
- git@github.com:Zhenia2665/foodgram-project-react.git```  
+ git@github.com:Zhenia2665/foodgram-project-react.git  
  cd foodgram-project-react   
  
 Создать и активировать виртуальное окружение: 
@@ -80,7 +75,7 @@ sudo docker-compose exec web python manage.py createsuperuser
  
  
 ## Автор проекта 
-Тарасова docker Евгения. 
+Тарасова Евгения. 
 admin@mail.ru 
 admin 
 ip: 84.201.143.93
