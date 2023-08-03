@@ -16,4 +16,4 @@ INDENT = 20
 
 Y_POSITION_CART = 15
 
-ERROR_MSG = 'Ошибка авторизации'
+ERROR_MSG = "Ошибка авторизации"
