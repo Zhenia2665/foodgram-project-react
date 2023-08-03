@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.db.models.aggregates import Count, Sum
 from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from django.contrib.auth.hashers import change_password
 from djoser.views import UserViewSet
 from django.db.models.expressions import Exists, OuterRef, Value
 from django.shortcuts import get_object_or_404
@@ -12,7 +11,7 @@ from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
                                         IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
@@ -28,8 +27,7 @@ from .constants import (Y_POSITION_PARAM, FONT_SIZE_CART, FONT_SIZE_DEF,
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, SubscribeRecipeSerializer,
                           SubscribeSerializer, TagSerializer, TokenSerializer,
-                          UserPasswordSerializer, CustomUserSerializer,
-                          SubscribeCreateSerializer)
+                          CustomUserSerializer, SubscribeCreateSerializer)
 from .pagination import LimitPageNumberPagination, CustomPagination
 
 User = get_user_model()
@@ -253,20 +251,3 @@ class RecipesViewSet(viewsets.ModelViewSet):
         page.save()
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename=FILENAME_PDF)
-
-
-@api_view(['post'])
-def change_password(request):
-    """Изменить пароль."""
-
-    serializer = UserPasswordSerializer(
-        data=request.data,
-        context={'request': request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response(
-            {'message': 'Пароль изменен.'},
-            status=status.HTTP_201_CREATED)
-    return Response(
-        {'error': 'Введите актуальные данные.'},
-        status=status.HTTP_400_BAD_REQUEST)
