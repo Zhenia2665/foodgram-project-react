@@ -1,28 +1,9 @@
-from django.core.exceptions import ValidationError
 from django_filters.rest_framework import FilterSet, filters
 
 from recipes.models import Ingredient, Recipe, Tag
 
 
-class TagsChoiceField(filters.fields.MultipleChoiceField):
-    def validate(self, value):
-        if self.required and not value:
-            raise ValidationError(
-                self.error_messages["required"], code="required")
-        for val in value:
-            if val in self.choices and not self.valid_value(val):
-                raise ValidationError(
-                    self.error_messages["invalid_choice"],
-                    code="invalid_choice",
-                    params={"value": val},
-                )
-
-
-class TagsFilter(filters.AllValuesMultipleFilter):
-    field_class = TagsChoiceField
-
-
-class IngredientFilter(filters.FilterSet):
+class IngredientFilter(FilterSet):
     name = filters.CharFilter(lookup_expr="istartswith")
 
     class Meta:
@@ -31,7 +12,7 @@ class IngredientFilter(filters.FilterSet):
 
 
 class RecipeFilter(FilterSet):
-    tags = filters.ModelMultipleChoiceFilter(
+    tags = filters.AllValuesMultipleFilter(
         queryset=Tag.objects.all(),
         field_name="tags__slug",
         to_field_name="slug",

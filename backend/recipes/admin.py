@@ -37,7 +37,6 @@ class RecipeAdmin(admin.ModelAdmin):
         "pub_date",
         "tags",
     )
-    inlines = (RecipeIngredientAdmin,)
     empty_value_display = EMPTY_MSG_ADMIN
 
     @admin.display(description="Электронная почта")

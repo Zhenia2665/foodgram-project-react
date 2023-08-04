@@ -20,3 +20,5 @@ ERROR_MSG = "Ошибка авторизации"
 
 MIN_AMOUNT_INGREDIENTS = 1
 MAX_AMOUNT_INGREDIENTS = 32000
+
+FILENAME_PDF = "Список покупок"

@@ -7,8 +7,7 @@ from django.dispatch import receiver
 from .constants import (
     INGREDIENT_MEASURE_MAX_LENGHT,
     INGREDIENT_NAME_MAX_LENGHT,
-    MAX,
-    MIN,
+    MAX, MIN,
     RECIEPE_NAME_MAX_LENGHT,
     TAG_COLOR_MAX_LENGHT,
     TAG_NAME_MAX_LENGHT,
@@ -86,19 +85,61 @@ class Recipe(models.Model):
         return f"{self.author.email}, {self.name}"
 
 
+# class IngredientAmount(models.Model):
+#     recipe = models.ForeignKey(
+#         Recipe, verbose_name="Рецепт",
+#         on_delete=models.CASCADE,
+#         related_name="recipeingredients",
+#     )
+#     ingredient = models.ForeignKey(
+#         "Ingredient",
+#         verbose_name="Ингредиент",
+#         on_delete=models.CASCADE,
+#         related_name="recipeingredients",
+#     )
+#     amount = models.PositiveSmallIntegerField(
+#         validators=(
+#             validators.MinValueValidator(
+#                 MIN, message="Мин. количество ингредиентов 1"),
+#             validators.MaxValueValidator(
+#                 MAX, message="Макс. количество ингредиентов 32000"
+#             ),
+#         ),
+#         verbose_name="Количество",
+#     )
+
+#     class Meta:
+#         verbose_name = "Количество ингредиента"
+#         verbose_name_plural = "Количество ингредиентов"
+#         ordering = ["-id"]
+#         constraints = [
+#             models.UniqueConstraint(
+#                 fields=["recipe", "ingredient"],
+#                 name="unique_ingredient_recipe"
+#             )
+#         ]
+
+#     def __str__(self):
+#         return (
+#             f"{self.ingredient.name} ({self.ingredient.measurement_unit})"
+#             f" - {self.amount}"
+#         )
+
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
-        Recipe, verbose_name="Рецепт",
+        Recipe,
         on_delete=models.CASCADE,
-        related_name="recipe"
+        related_name='recipeingredients',
+        verbose_name='Рецепт'
+
     )
     ingredient = models.ForeignKey(
-        "Ingredient",
-        verbose_name="Ингредиент",
+        Ingredient,
         on_delete=models.CASCADE,
-        related_name="ingredient",
+        related_name='recipeingredients',
+        verbose_name='Ингредиент'
     )
-    amount = models.PositiveSmallIntegerField(
+    amount = models.IntegerField(
         validators=(
             validators.MinValueValidator(
                 MIN, message="Мин. количество ингредиентов 1"),
@@ -110,21 +151,9 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
-        verbose_name = "Количество ингредиента"
-        verbose_name_plural = "Количество ингредиентов"
-        ordering = ["-id"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["recipe", "ingredient"],
-                name="unique_ingredient_recipe"
-            )
-        ]
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
 
-    def __str__(self):
-        return (
-            f"{self.ingredient.name} ({self.ingredient.measurement_unit})"
-            f" - {self.amount}"
-        )
 
 
 class FavoriteRecipe(models.Model):
@@ -136,7 +165,10 @@ class FavoriteRecipe(models.Model):
         verbose_name="Пользователь",
     )
     recipe = models.ForeignKey(
-        Recipe, related_name="favorite_recipe", verbose_name="Избранный рецепт"
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="favorite_recipe",
+        verbose_name="Избранный рецепт"
     )
 
     class Meta:
@@ -201,7 +233,10 @@ class ShoppingCart(models.Model):
         verbose_name="Пользователь",
     )
     recipe = models.ForeignKey(
-        Recipe, related_name="shopping_cart", verbose_name="Покупка"
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="shopping_cart",
+        verbose_name="Покупка"
     )
 
     class Meta:

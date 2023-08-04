@@ -1,12 +1,11 @@
 import io
 
 from django.contrib.auth import get_user_model
-from django.db.models.aggregates import Count, Sum
-from django.db.models.expressions import Value
+from django.db.models.aggregates import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
+from djoser.views import UserViewSet as DjoserUserViewSet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
@@ -14,6 +13,13 @@ from rest_framework import generics, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.views import APIView
+from rest_framework.status import (
+    HTTP_201_CREATED,
+    HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED
+)
 from rest_framework.permissions import (
     SAFE_METHODS,
     AllowAny,
@@ -33,64 +39,56 @@ from .constants import (
     Y_POSITION_PARAM
 )
 from .filters import IngredientFilter, RecipeFilter
-from .pagination import CustomPagination, LimitPageNumberPagination
+from .pagination import LimitPageNumberPagination
 from .serializers import (
-    CustomUserSerializer,
     IngredientSerializer,
     RecipeGetSerializer,
     RecipeSerializer,
     RecipeWriteSerializer,
-    SubscribeCreateSerializer,
-    SubscribeSerializer,
+    UserGetSerializer,
     TagSerializer,
     TokenSerializer,
     UserSubscribeSerializer
 )
-from recipes.models import Ingredient, Recipe, Subscribe, Tag
+from recipes.models import Ingredient, Recipe, Tag, Subscribe
 
 User = get_user_model()
 
 
-class CustomUserViewset(UserViewSet):
-    """Создание и удаление подписки на пользователя."""
+class UserViewSet(DjoserUserViewSet):
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserGetSerializer
+    pagination_class = LimitPageNumberPagination
+    additional_serializer = UserSubscribeSerializer
 
-    permission_classes = [AllowAny]
-    queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
-    pagination_class = CustomPagination
+    @action(methods=('POST', 'DELETE'), detail=True)
+    def subscribe(self, request, **kwargs):
+        user = self.request.user
+        if user.is_anonymous:
+            return Response(status=HTTP_401_UNAUTHORIZED)
+        obj = get_object_or_404(self.queryset, id=kwargs.get('id'))
+        serializer = self.additional_serializer(
+            obj, context={'request': self.request}
+        )
+        if self.request.method == 'POST':
+            user.subscribe.add(obj)
+            return Response(serializer.data, status=HTTP_201_CREATED)
+        if self.request.method == 'DELETE':
+            user.subscribe.remove(obj)
+            return Response(status=HTTP_204_NO_CONTENT)
+        return Response(status=HTTP_400_BAD_REQUEST)
 
-    @action(
-        detail=False, url_path="subscriptions",
-        permission_classes=(IsAuthenticated,)
-    )
+    @action(methods=('GET',), detail=False)
     def subscriptions(self, request):
-        queryset = request.user.subscriptions.all()
-        page = self.paginate_queryset(queryset)
+        user = self.request.user
+        if user.is_anonymous:
+            return Response(status=HTTP_401_UNAUTHORIZED)
+        authors = user.subscribe.all()
+        pages = self.paginate_queryset(authors)
         serializer = UserSubscribeSerializer(
-            page, many=True, context={"request": request})
+            pages, many=True, context={'request': request}
+        )
         return self.get_paginated_response(serializer.data)
-
-    @action(
-        methods=["POST", "DELETE"],
-        detail=True,
-        url_path="subscribe",
-        permission_classes=(IsAuthenticated,),
-    )
-    def subscribe(self, request, id):
-        author = get_object_or_404(User, pk=id)
-        user = request.user
-        data = {}
-        data["author"] = author.pk
-        data["user"] = user.pk
-        if request.method == "POST":
-            serializer = SubscribeCreateSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            obj, _ = Subscribe.objects.get_or_create(user=user, author=author)
-            serializer = SubscribeSerializer(obj, context={"request": request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        follow = get_object_or_404(Subscribe, user=user, author=author)
-        follow.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AuthToken(ObtainAuthToken):
@@ -106,6 +104,32 @@ class AuthToken(ObtainAuthToken):
         token, created = Token.objects.get_or_create(user=user)
         return Response({"auth_token": token.key},
                         status=status.HTTP_201_CREATED)
+
+
+class UserSubscribeView(APIView):
+    """Создание/удаление подписки на пользователя."""
+    def post(self, request, user_id):
+        author = get_object_or_404(User, id=user_id)
+        serializer = UserSubscribeSerializer(
+            data={'user': request.user.id, 'author': author.id},
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, user_id):
+        author = get_object_or_404(User, id=user_id)
+        if not Subscribe.objects.filter(
+                user=request.user, author=author).exists():
+            return Response(
+                {'errors': 'Вы не подписаны на этого пользователя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        Subscribe.objects.get(
+            user=request.user.id,
+            author=user_id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -128,39 +152,6 @@ class GetObjectMixin:
         recipe = get_object_or_404(Recipe, id=recipe_id)
         self.check_object_permissions(self.request, recipe)
         return recipe
-
-
-class AddAndDeleteSubscribe(generics.RetrieveDestroyAPIView,
-                            generics.ListCreateAPIView):
-    """Подписка и отписка от пользователя."""
-
-    serializer_class = SubscribeSerializer
-
-    def get_queryset(self):
-        return (
-            self.request.user.follower.select_related("following")
-            .prefetch_related("following__recipe")
-            .annotate(
-                recipes_count=Count("following__recipe"),
-                is_subscribed=Value(True),
-            )
-        )
-
-    def get_object(self):
-        user_id = self.kwargs["user_id"]
-        user = get_object_or_404(User, id=user_id)
-        self.check_object_permissions(self.request, user)
-        return user
-
-    def create(self, request, *args, **kwargs):
-        instance = self.get_object()
-        subs = request.user.follower.create(author=instance)
-        serializer = self.get_serializer(subs)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED)
-
-    def perform_destroy(self, instance):
-        self.request.user.follower.filter(author=instance).delete()
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

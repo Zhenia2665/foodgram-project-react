@@ -7,14 +7,14 @@ from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from users.models import Subscription, User
-from app.models import (
-    Favorite,
+from users.models import User
+from recipes.models import (
     Ingredient,
     Recipe,
-    RecipeIngredient,
-    IngredientAmount,
     ShoppingCart,
+    Subscribe,
+    RecipeIngredient,
+    FavoriteRecipe,
     Tag
 )
 from .constants import (COOKING_TIME_MAX, COOKING_TIME_MIN, ERROR_MSG,
@@ -93,11 +93,11 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
     """Сериализатор для подписки/отписки от пользователей."""
 
     class Meta:
-        model = Subscription
+        model = Subscribe
         fields = "__all__"
         validators = [
             UniqueTogetherValidator(
-                queryset=Subscription.objects.all(),
+                queryset=Subscribe.objects.all(),
                 fields=("user", "author"),
                 message="Вы уже подписаны на этого пользователя",
             )
@@ -144,19 +144,17 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class AmountSerializerGet(serializers.ModelSerializer):
-    id = serializers.CharField(source='ingredients.id')
-    name = serializers.CharField(source='ingredients.name')
+    id = serializers.IntegerField(source="ingredient.id", read_only=True)
+    name = serializers.CharField(source="ingredient.name", read_only=True)
     measurement_unit = serializers.CharField(
-        source='ingredients.measurement_unit')
+        source="ingredient.measurement_unit", read_only=True)
     amount = serializers.IntegerField(
         min_value=MIN_AMOUNT_INGREDIENTS,
-        message='Нужно количество ингредиентов -1',
-        min_value=MAX_AMOUNT_INGREDIENTS,
-        message='Максимальное количествоингредиентов - 32000',
+        max_value=MAX_AMOUNT_INGREDIENTS
     ),
 
     class Meta:
-        model = IngredientAmount
+        model = RecipeIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
@@ -303,11 +301,11 @@ class FavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для работы с избранными рецептами."""
 
     class Meta:
-        model = Favorite
+        model = FavoriteRecipe
         fields = "__all__"
         validators = [
             UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
+                queryset=FavoriteRecipe.objects.all(),
                 fields=("user", "recipe"),
                 message="Рецепт уже добавлен в избранное",
             )
